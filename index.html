@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONフォーマッター</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #2d2d2d;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #404040;
+        }
+        
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .description {
+            color: #9e9e9e;
+            margin-bottom: 15px;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 500px;
+        }
+        
+        .input-section, .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+        
+        h2 {
+            color: #569cd6;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #404040;
+            font-size: 1.4rem;
+        }
+        
+        .input-methods {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .method {
+            flex: 1;
+            padding: 15px;
+            background-color: #3c3c3c;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #4d4d4d;
+        }
+        
+        .method:hover {
+            background-color: #4a4a4a;
+            border-color: #569cd6;
+        }
+        
+        .method.active {
+            background-color: #2b5699;
+            border-color: #569cd6;
+        }
+        
+        .method i {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #569cd6;
+        }
+        
+        .drop-zone {
+            border: 2px dashed #4d4d4d;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            background-color: #3c3c3c;
+        }
+        
+        .drop-zone.highlight {
+            border-color: #4ec9b0;
+            background-color: #2a3b3a;
+        }
+        
+        .drop-zone i {
+            font-size: 40px;
+            color: #4d4d4d;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone p {
+            color: #9e9e9e;
+            margin-bottom: 10px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #3276c3;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-label:hover {
+            background-color: #2861a5;
+        }
+        
+        .code-area {
+            flex: 1;
+            border: 1px solid #4d4d4d;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background-color: #1e1e1e;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+        
+        .code-header {
+            background-color: #2d2d2d;
+            padding: 8px 15px;
+            border-bottom: 1px solid #4d4d4d;
+            font-size: 0.9rem;
+            color: #9e9e9e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .scroll-hint {
+            font-size: 0.8rem;
+            color: #7a7a7a;
+        }
+        
+        textarea.code-editor {
+            width: 100%;
+            flex: 1;
+            padding: 15px;
+            border: none;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            resize: none;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            overflow: auto;
+        }
+        
+        .formatted-json-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+        
+        .formatted-json {
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            background-color: #1e1e1e;
+            white-space: pre;
+            min-height: 100%;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-format {
+            background-color: #0e639c;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-format:hover {
+            background-color: #1177bb;
+        }
+        
+        .btn-download, .btn-copy {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 16px;
+        }
+        
+        .btn-download {
+            background-color: #388a34;
+            color: white;
+        }
+        
+        .btn-download:hover {
+            background-color: #3f9c3a;
+        }
+        
+        .btn-copy {
+            background-color: #7a3e9c;
+            color: white;
+        }
+        
+        .btn-copy:hover {
+            background-color: #8a49ad;
+        }
+        
+        .error {
+            color: #f48771;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #3a1d1d;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            color: #4ec9b0;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #1e3a38;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        /* JSON Syntax Highlighting */
+        .json-key { color: #9cdcfe; }
+        .json-string { color: #ce9178; }
+        .json-number { color: #b5cea8; }
+        .json-boolean { color: #569cd6; }
+        .json-null { color: #569cd6; }
+        
+        /* スクロールバーのスタイル */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #2d2d2d;
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 6px;
+            border: 2px solid #2d2d2d;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .input-methods {
+                flex-direction: column;
+            }
+            
+            .input-section, .output-section {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JSONフォーマッター</h1>
+            <p class="description">made by Yytanuki</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>入力</h2>
+                
+                <div class="input-methods">
+                    <div class="method active" id="upload-method">
+                        <i class="fas fa-file-upload"></i>
+                        <h3>ファイルアップロード</h3>
+                    </div>
+                    <div class="method" id="input-method">
+                        <i class="fas fa-keyboard"></i>
+                        <h3>直接入力</h3>
+                    </div>
+                </div>
+                
+                <div id="upload-area">
+                    <div id="drop-zone" class="drop-zone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>JSONファイルをここにドラッグ＆ドロップ</p>
+                        <p>または</p>
+                        <input type="file" id="file-input" class="file-input" accept=".json">
+                        <label for="file-input" class="file-label">ファイルを選択</label>
+                    </div>
+                    <div id="file-name" style="text-align: center; color: #9e9e9e; margin-bottom: 15px;"></div>
+                </div>
+                
+                <div class="code-area">
+                    <div class="code-header">
+                        <span>入力JSON</span>
+                        <span class="scroll-hint"></span>
+                    </div>
+                    <textarea id="json-input" class="code-editor" placeholder="ここにJSONを貼り付けるか入力してください"></textarea>
+                </div>
+                
+                <div class="buttons">
+                    <button id="format-btn" class="btn btn-format">
+                        <i class="fas fa-magic"></i> JSONを整形
+                    </button>
+                </div>
+                
+                <div id="error-msg" class="error"></div>
+                <div id="success-msg" class="success"></div>
+            </div>
+            
+            <div class="output-section">
+                <h2>整形結果</h2>
+                
+                <div class="code-area">
+                    <div class="code-header">
+                        <span>整形済みJSON</span>
+                        <span class="scroll-hint"></span>
+                    </div>
+                    <div class="formatted-json-container">
+                        <pre id="json-output" class="formatted-json"></pre>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="download-btn" class="btn btn-download" title="ダウンロード" disabled>
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button id="copy-btn" class="btn btn-copy" title="コピー" disabled>
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadMethod = document.getElementById('upload-method');
+            const inputMethod = document.getElementById('input-method');
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const fileName = document.getElementById('file-name');
+            const jsonInput = document.getElementById('json-input');
+            const jsonOutput = document.getElementById('json-output');
+            const formatBtn = document.getElementById('format-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const errorMsg = document.getElementById('error-msg');
+            const successMsg = document.getElementById('success-msg');
+            
+            let currentJson = null;
+            
+            // 入力方法の切り替え
+            uploadMethod.addEventListener('click', function() {
+                uploadMethod.classList.add('active');
+                inputMethod.classList.remove('active');
+            });
+            
+            inputMethod.addEventListener('click', function() {
+                inputMethod.classList.add('active');
+                uploadMethod.classList.remove('active');
+            });
+            
+            // ドラッグ＆ドロップの処理
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('highlight');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('highlight');
+            }
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    fileInput.files = files;
+                    handleFiles(files);
+                }
+            }
+            
+            // ファイル選択時の処理
+            fileInput.addEventListener('change', function(e) {
+                handleFiles(e.target.files);
+            });
+            
+            function handleFiles(files) {
+                const file = files[0];
+                if (file && file.type === 'application/json') {
+                    fileName.textContent = `選択されたファイル: ${file.name}`;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            currentJson = e.target.result;
+                            jsonInput.value = currentJson;
+                            hideMessages();
+                        } catch (err) {
+                            showError('ファイルの読み込みに失敗しました');
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    showError('有効なJSONファイルを選択してください');
+                }
+            }
+            
+            // JSON整形処理
+            formatBtn.addEventListener('click', function() {
+                hideMessages();
+                
+                let jsonString = jsonInput.value;
+                
+                if (!jsonString.trim()) {
+                    showError('JSONが入力されていません');
+                    return;
+                }
+                
+                try {
+                    // JSONの構文チェック
+                    const jsonObj = JSON.parse(jsonString);
+                    
+                    // インデントをつけて整形
+                    const formattedJson = JSON.stringify(jsonObj, null, 2);
+                    
+                    // シンタックスハイライトを適用
+                    const highlightedJson = syntaxHighlight(formattedJson);
+                    
+                    // 出力エリアに表示
+                    jsonOutput.innerHTML = highlightedJson;
+                    
+                    // ダウンロードとコピーボタンを有効化
+                    downloadBtn.disabled = false;
+                    copyBtn.disabled = false;
+                    
+                    showSuccess('JSONの整形が成功しました');
+                } catch (err) {
+                    showError('無効なJSON形式です: ' + err.message);
+                }
+            });
+            
+            // JSONシンタックスハイライト関数
+            function syntaxHighlight(json) {
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'json-number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'json-boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'json-null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            }
+            
+            // JSONダウンロード処理
+            downloadBtn.addEventListener('click', function() {
+                if (!jsonOutput.textContent) return;
+                
+                const blob = new Blob([jsonOutput.textContent], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'formatted.json';
+                document.body.appendChild(a);
+                a.click();
+                
+                // クリーンアップ
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                showSuccess('JSONファイルをダウンロードしました');
+            });
+            
+            // クリップボードにコピー
+            copyBtn.addEventListener('click', function() {
+                if (!jsonOutput.textContent) return;
+                
+                const textArea = document.createElement('textarea');
+                textArea.value = jsonOutput.textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                showSuccess('クリップボードにコピーしました');
+            });
+            
+            // エラーメッセージ表示
+            function showError(message) {
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+            }
+            
+            // 成功メッセージ表示
+            function showSuccess(message) {
+                successMsg.textContent = message;
+                successMsg.style.display = 'block';
+                errorMsg.style.display = 'none';
+                
+                // 3秒後にメッセージを非表示
+                setTimeout(hideMessages, 3000);
+            }
+            
+            // メッセージ非表示
+            function hideMessages() {
+                errorMsg.style.display = 'none';
+                successMsg.style.display = 'none';
+            }
+            
+            // 入力エリアの自動リサイズ
+            jsonInput.addEventListener('input', function() {
+                // スクロールバーは自動的に表示される
+            });
+        });
+    </script>
+</body>
+</html>
